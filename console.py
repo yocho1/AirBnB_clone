@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 """Defines the HBNB console (command interpreter)."""
 import cmd
+import shlex
+from models import storage
 from models.base_model import BaseModel
 
 
@@ -8,6 +10,7 @@ class HBNBCommand(cmd.Cmd):
     """Defines the HolbertonBnB command interpreter."""
 
     prompt = "(hbnb) "
+    __classes = {"BaseModel"}
 
     def emptyline(self):
         """Do nothing on empty input line."""
@@ -24,15 +27,35 @@ class HBNBCommand(cmd.Cmd):
 
     def do_create(self, arg):
         """Create a new instance of a class, save it, print its id."""
-        if not arg:
+        args = shlex.split(arg)
+        if len(args) == 0:
             print("** class name missing **")
             return
-        if arg != "BaseModel":
+        if args[0] not in self.__classes:
             print("** class doesn't exist **")
             return
         new_instance = BaseModel()
         new_instance.save()
         print(new_instance.id)
+
+    def do_show(self, arg):
+        """Print the string representation of an instance."""
+        args = shlex.split(arg)
+        if len(args) == 0:
+            print("** class name missing **")
+            return
+        if args[0] not in self.__classes:
+            print("** class doesn't exist **")
+            return
+        if len(args) < 2:
+            print("** instance id missing **")
+            return
+        key = "{}.{}".format(args[0], args[1])
+        all_objs = storage.all()
+        if key in all_objs:
+            print(all_objs[key])
+        else:
+            print("** no instance found **")
 
 
 if __name__ == "__main__":
