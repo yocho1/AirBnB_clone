@@ -224,5 +224,90 @@ class TestHBNBCommand_all(unittest.TestCase):
         self.assertIn(id2, out_bm_str)
 
 
+class TestHBNBCommand_update(unittest.TestCase):
+    """Tests for the update command in HBNBCommand."""
+
+    def setUp(self):
+        """Reset storage and clear JSON file before each test."""
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+        storage.all().clear()
+
+    def tearDown(self):
+        """Clean up JSON file after tests."""
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+
+    def test_update_missing_class(self):
+        """Test output when no class name is provided."""
+        expected = "** class name missing **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("update")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_update_invalid_class(self):
+        """Test output when an invalid class name is provided."""
+        expected = "** class doesn't exist **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("update FakeClass 123")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_update_missing_id(self):
+        """Test output when instance id is missing."""
+        expected = "** instance id missing **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("update BaseModel")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_update_no_instance_found(self):
+        """Test output when the instance id does not exist."""
+        expected = "** no instance found **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("update BaseModel fake-id-123")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_update_missing_attr_name(self):
+        """Test output when attribute name is missing."""
+        with patch('sys.stdout', new=StringIO()) as create_out:
+            HBNBCommand().onecmd("create BaseModel")
+        obj_id = create_out.getvalue().strip()
+
+        expected = "** attribute name missing **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("update BaseModel {}".format(obj_id))
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_update_missing_attr_value(self):
+        """Test output when attribute value is missing."""
+        with patch('sys.stdout', new=StringIO()) as create_out:
+            HBNBCommand().onecmd("create BaseModel")
+        obj_id = create_out.getvalue().strip()
+
+        expected = "** value missing **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("update BaseModel {} name".format(obj_id))
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_update_valid(self):
+        """Test updating an instance attribute dynamically."""
+        with patch('sys.stdout', new=StringIO()) as create_out:
+            HBNBCommand().onecmd("create BaseModel")
+        obj_id = create_out.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()):
+            HBNBCommand().onecmd(
+                'update BaseModel {} name "New Name"'.format(obj_id)
+            )
+
+        key = "BaseModel.{}".format(obj_id)
+        obj = storage.all()[key]
+        self.assertTrue(hasattr(obj, "name"))
+        self.assertEqual(obj.name, "New Name")
+
+
 if __name__ == "__main__":
     unittest.main()
