@@ -77,6 +77,21 @@ class HBNBCommand(cmd.Cmd):
         else:
             print("** no instance found **")
 
+    def do_all(self, arg):
+        """Print string representations of all instances, or of one
+        class if a class name is given.
+        """
+        args = shlex.split(arg)
+        obj_list = []
+        all_objs = storage.all()
+        if len(args) > 0 and args[0] not in self.__classes:
+            print("** class doesn't exist **")
+            return
+        for obj in all_objs.values():
+            if len(args) == 0 or args[0] == obj.__class__.__name__:
+                obj_list.append(str(obj))
+        print(obj_list)
+
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
