@@ -110,5 +110,65 @@ class TestHBNBCommand_show(unittest.TestCase):
         self.assertTrue(out_str.startswith(expected_prefix))
 
 
+class TestHBNBCommand_destroy(unittest.TestCase):
+    """Tests for the destroy command in HBNBCommand."""
+
+    def setUp(self):
+        """Reset storage and clear JSON file before each test."""
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+        storage.all().clear()
+
+    def tearDown(self):
+        """Clean up JSON file after tests."""
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+
+    def test_destroy_missing_class(self):
+        """Test output when no class name is provided."""
+        expected = "** class name missing **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("destroy")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_destroy_invalid_class(self):
+        """Test output when an invalid class name is provided."""
+        expected = "** class doesn't exist **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("destroy FakeClass 123")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_destroy_missing_id(self):
+        """Test output when instance id is missing."""
+        expected = "** instance id missing **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("destroy BaseModel")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_destroy_no_instance_found(self):
+        """Test output when the instance id does not exist."""
+        expected = "** no instance found **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("destroy BaseModel fake-id-123")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_destroy_valid(self):
+        """Test destroying an instance removes it from storage."""
+        with patch('sys.stdout', new=StringIO()) as create_out:
+            HBNBCommand().onecmd("create BaseModel")
+        obj_id = create_out.getvalue().strip()
+        key = "BaseModel.{}".format(obj_id)
+        self.assertIn(key, storage.all())
+
+        with patch('sys.stdout', new=StringIO()):
+            HBNBCommand().onecmd("destroy BaseModel {}".format(obj_id))
+
+        self.assertNotIn(key, storage.all())
+
+
 if __name__ == "__main__":
     unittest.main()
