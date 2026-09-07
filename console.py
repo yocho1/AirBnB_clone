@@ -140,7 +140,13 @@ class HBNBCommand(cmd.Cmd):
             print("** value missing **")
             return
         attr_name = args[2]
-        attr_value = args[3]
+        # Handle quoted strings (e.g., "New Name")
+        attr_value = " ".join(args[3:])
+        # Remove quotes if present
+        if attr_value.startswith('"') and attr_value.endswith('"'):
+            attr_value = attr_value[1:-1]
+        elif attr_value.startswith("'") and attr_value.endswith("'"):
+            attr_value = attr_value[1:-1]
         # Try to cast to appropriate type
         try:
             if '.' in attr_value:
