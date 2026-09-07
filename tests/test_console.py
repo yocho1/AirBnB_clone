@@ -170,5 +170,59 @@ class TestHBNBCommand_destroy(unittest.TestCase):
         self.assertNotIn(key, storage.all())
 
 
+class TestHBNBCommand_all(unittest.TestCase):
+    """Tests for the all command in HBNBCommand."""
+
+    def setUp(self):
+        """Reset storage and clear JSON file before each test."""
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+        storage.all().clear()
+
+    def tearDown(self):
+        """Clean up JSON file after tests."""
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+
+    def test_all_invalid_class(self):
+        """Test output when an invalid class name is provided."""
+        expected = "** class doesn't exist **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("all FakeClass")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_all_empty(self):
+        """Test output when storage is empty."""
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("all")
+        self.assertEqual(output.getvalue().strip(), "[]")
+
+    def test_all_with_objects(self):
+        """Test all command output with existing instances."""
+        with patch('sys.stdout', new=StringIO()) as create1:
+            HBNBCommand().onecmd("create BaseModel")
+        id1 = create1.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as create2:
+            HBNBCommand().onecmd("create BaseModel")
+        id2 = create2.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as output_all:
+            HBNBCommand().onecmd("all")
+        out_str = output_all.getvalue().strip()
+        self.assertIn(id1, out_str)
+        self.assertIn(id2, out_str)
+
+        with patch('sys.stdout', new=StringIO()) as output_bm:
+            HBNBCommand().onecmd("all BaseModel")
+        out_bm_str = output_bm.getvalue().strip()
+        self.assertIn(id1, out_bm_str)
+        self.assertIn(id2, out_bm_str)
+
+
 if __name__ == "__main__":
     unittest.main()
