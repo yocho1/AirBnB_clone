@@ -1,112 +1,134 @@
 #!/usr/bin/python3
-"""Defines the HBNB console (command interpreter)."""
+"""Command interpreter for AirBnB clone"""
+
 import cmd
-import shlex
+import sys
 from models import storage
 from models.base_model import BaseModel
+from models.user import User
+from models.place import Place
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.review import Review
 
 
 class HBNBCommand(cmd.Cmd):
-    """Defines the HolbertonBnB command interpreter."""
+    """Command interpreter for AirBnB objects"""
 
     prompt = "(hbnb) "
-    __classes = {"BaseModel"}
+    __classes = {
+        'BaseModel': BaseModel,
+        'User': User,
+        'Place': Place,
+        'State': State,
+        'City': City,
+        'Amenity': Amenity,
+        'Review': Review
+    }
 
     def emptyline(self):
-        """Do nothing on empty input line."""
+        """Do nothing on empty line"""
         pass
 
     def do_quit(self, arg):
-        """Quit command to exit the program."""
+        """Quit command to exit the program"""
         return True
 
     def do_EOF(self, arg):
-        """EOF signal to exit the program."""
-        print()
+        """EOF command to exit the program"""
         return True
 
+    def do_help(self, arg):
+        """Show available commands"""
+        cmd.Cmd.do_help(self, arg)
+
     def do_create(self, arg):
-        """Create a new instance of a class, save it, print its id."""
-        args = shlex.split(arg)
-        if len(args) == 0:
+        """Create a new instance of a class"""
+        if not arg:
             print("** class name missing **")
             return
-        if args[0] not in self.__classes:
+        args = arg.split()
+        class_name = args[0]
+        if class_name not in self.__classes:
             print("** class doesn't exist **")
             return
-        new_instance = BaseModel()
-        new_instance.save()
-        print(new_instance.id)
+        new_obj = self.__classes[class_name]()
+        new_obj.save()
+        print(new_obj.id)
 
     def do_show(self, arg):
-        """Print the string representation of an instance."""
-        args = shlex.split(arg)
-        if len(args) == 0:
+        """Show an instance by class name and id"""
+        if not arg:
             print("** class name missing **")
             return
-        if args[0] not in self.__classes:
+        args = arg.split()
+        class_name = args[0]
+        if class_name not in self.__classes:
             print("** class doesn't exist **")
             return
         if len(args) < 2:
             print("** instance id missing **")
             return
-        key = "{}.{}".format(args[0], args[1])
+        obj_id = args[1]
+        key = f"{class_name}.{obj_id}"
         all_objs = storage.all()
-        if key in all_objs:
-            print(all_objs[key])
-        else:
+        if key not in all_objs:
             print("** no instance found **")
+            return
+        print(all_objs[key])
 
     def do_destroy(self, arg):
-        """Delete an instance based on the class name and id."""
-        args = shlex.split(arg)
-        if len(args) == 0:
+        """Delete an instance by class name and id"""
+        if not arg:
             print("** class name missing **")
             return
-        if args[0] not in self.__classes:
+        args = arg.split()
+        class_name = args[0]
+        if class_name not in self.__classes:
             print("** class doesn't exist **")
             return
         if len(args) < 2:
             print("** instance id missing **")
             return
-        key = "{}.{}".format(args[0], args[1])
+        obj_id = args[1]
+        key = f"{class_name}.{obj_id}"
         all_objs = storage.all()
-        if key in all_objs:
-            del all_objs[key]
-            storage.save()
-        else:
+        if key not in all_objs:
             print("** no instance found **")
+            return
+        del all_objs[key]
+        storage.save()
 
     def do_all(self, arg):
-        """Print string representations of all instances, or of one
-        class if a class name is given.
-        """
-        args = shlex.split(arg)
-        obj_list = []
+        """Show all instances, or all of a specific class"""
         all_objs = storage.all()
-        if len(args) > 0 and args[0] not in self.__classes:
+        if not arg:
+            print([str(obj) for obj in all_objs.values()])
+            return
+        class_name = arg.split()[0]
+        if class_name not in self.__classes:
             print("** class doesn't exist **")
             return
-        for obj in all_objs.values():
-            if len(args) == 0 or args[0] == obj.__class__.__name__:
-                obj_list.append(str(obj))
-        print(obj_list)
+        filtered = [str(obj) for obj in all_objs.values()
+                    if obj.__class__.__name__ == class_name]
+        print(filtered)
 
     def do_update(self, arg):
-        """Update an instance's attribute based on the class name,
-        id, attribute name, and attribute value.
-        """
-        args = shlex.split(arg)
-        if len(args) == 0:
+        """Update an attribute of an instance"""
+        if not arg:
             print("** class name missing **")
             return
-        if args[0] not in self.__classes:
+        args = arg.split()
+        class_name = args[0]
+        if class_name not in self.__classes:
             print("** class doesn't exist **")
             return
         if len(args) < 2:
             print("** instance id missing **")
             return
-        key = "{}.{}".format(args[0], args[1])
+        obj_id = args[1]
+        key = f"{class_name}.{obj_id}"
         all_objs = storage.all()
         if key not in all_objs:
             print("** no instance found **")
@@ -117,10 +139,20 @@ class HBNBCommand(cmd.Cmd):
         if len(args) < 4:
             print("** value missing **")
             return
+        attr_name = args[2]
+        attr_value = args[3]
+        # Try to cast to appropriate type
+        try:
+            if '.' in attr_value:
+                attr_value = float(attr_value)
+            else:
+                attr_value = int(attr_value)
+        except ValueError:
+            pass  # Keep as string
         obj = all_objs[key]
-        setattr(obj, args[2], args[3])
+        setattr(obj, attr_name, attr_value)
         obj.save()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     HBNBCommand().cmdloop()
