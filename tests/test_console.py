@@ -50,5 +50,65 @@ class TestHBNBCommand_create(unittest.TestCase):
         self.assertIn(key, storage.all())
 
 
+class TestHBNBCommand_show(unittest.TestCase):
+    """Tests for the show command in HBNBCommand."""
+
+    def setUp(self):
+        """Reset storage and clear JSON file before each test."""
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+        storage.all().clear()
+
+    def tearDown(self):
+        """Clean up JSON file after tests."""
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+
+    def test_show_missing_class(self):
+        """Test output when no class name is provided."""
+        expected = "** class name missing **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("show")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_show_invalid_class(self):
+        """Test output when an invalid class name is provided."""
+        expected = "** class doesn't exist **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("show FakeClass 123")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_show_missing_id(self):
+        """Test output when instance id is missing."""
+        expected = "** instance id missing **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("show BaseModel")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_show_no_instance_found(self):
+        """Test output when the instance id does not exist."""
+        expected = "** no instance found **"
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("show BaseModel fake-id-123")
+        self.assertEqual(output.getvalue().strip(), expected)
+
+    def test_show_valid(self):
+        """Test showing a valid existing instance."""
+        with patch('sys.stdout', new=StringIO()) as create_out:
+            HBNBCommand().onecmd("create BaseModel")
+        obj_id = create_out.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as show_out:
+            HBNBCommand().onecmd("show BaseModel {}".format(obj_id))
+
+        out_str = show_out.getvalue().strip()
+        expected_prefix = "[BaseModel] ({})".format(obj_id)
+        self.assertTrue(out_str.startswith(expected_prefix))
+
+
 if __name__ == "__main__":
     unittest.main()
