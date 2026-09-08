@@ -7,6 +7,9 @@ from unittest.mock import patch
 from console import HBNBCommand
 from models import storage
 
+CLASSES = ["BaseModel", "User", "State", "City",
+           "Amenity", "Place", "Review"]
+
 
 class TestHBNBCommand_create(unittest.TestCase):
     """Tests for the create command in HBNBCommand."""
@@ -48,6 +51,19 @@ class TestHBNBCommand_create(unittest.TestCase):
         self.assertEqual(len(generated_id), 36)
         key = "BaseModel.{}".format(generated_id)
         self.assertIn(key, storage.all())
+
+    def test_create_all_classes(self):
+        """Test creating instances for all supported AirBnB models."""
+        for cls_name in CLASSES:
+            with self.subTest(cls_name=cls_name):
+                with patch('sys.stdout', new=StringIO()) as output:
+                    HBNBCommand().onecmd("create {}".format(cls_name))
+                generated_id = output.getvalue().strip()
+                self.assertEqual(len(generated_id), 36)
+                key = "{}.{}".format(cls_name, generated_id)
+                self.assertIn(key, storage.all())
+                obj = storage.all()[key]
+                self.assertEqual(obj.__class__.__name__, cls_name)
 
 
 class TestHBNBCommand_show(unittest.TestCase):
@@ -109,6 +125,22 @@ class TestHBNBCommand_show(unittest.TestCase):
         expected_prefix = "[BaseModel] ({})".format(obj_id)
         self.assertTrue(out_str.startswith(expected_prefix))
 
+    def test_show_all_classes(self):
+        """Test showing a valid instance for every supported class."""
+        for cls_name in CLASSES:
+            with self.subTest(cls_name=cls_name):
+                with patch('sys.stdout', new=StringIO()) as create_out:
+                    HBNBCommand().onecmd("create {}".format(cls_name))
+                obj_id = create_out.getvalue().strip()
+
+                with patch('sys.stdout', new=StringIO()) as show_out:
+                    cmd = "show {} {}".format(cls_name, obj_id)
+                    HBNBCommand().onecmd(cmd)
+
+                out_str = show_out.getvalue().strip()
+                expected_prefix = "[{}] ({})".format(cls_name, obj_id)
+                self.assertTrue(out_str.startswith(expected_prefix))
+
 
 class TestHBNBCommand_destroy(unittest.TestCase):
     """Tests for the destroy command in HBNBCommand."""
@@ -169,6 +201,22 @@ class TestHBNBCommand_destroy(unittest.TestCase):
 
         self.assertNotIn(key, storage.all())
 
+    def test_destroy_all_classes(self):
+        """Test destroying a valid instance for every supported class."""
+        for cls_name in CLASSES:
+            with self.subTest(cls_name=cls_name):
+                with patch('sys.stdout', new=StringIO()) as create_out:
+                    HBNBCommand().onecmd("create {}".format(cls_name))
+                obj_id = create_out.getvalue().strip()
+                key = "{}.{}".format(cls_name, obj_id)
+                self.assertIn(key, storage.all())
+
+                with patch('sys.stdout', new=StringIO()):
+                    cmd = "destroy {} {}".format(cls_name, obj_id)
+                    HBNBCommand().onecmd(cmd)
+
+                self.assertNotIn(key, storage.all())
+
 
 class TestHBNBCommand_all(unittest.TestCase):
     """Tests for the all command in HBNBCommand."""
@@ -222,6 +270,22 @@ class TestHBNBCommand_all(unittest.TestCase):
         out_bm_str = output_bm.getvalue().strip()
         self.assertIn(id1, out_bm_str)
         self.assertIn(id2, out_bm_str)
+
+    def test_all_filters_by_class(self):
+        """Test that 'all <class>' only returns that class's objects."""
+        with patch('sys.stdout', new=StringIO()) as create_state:
+            HBNBCommand().onecmd("create State")
+        state_id = create_state.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as create_city:
+            HBNBCommand().onecmd("create City")
+        city_id = create_city.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as output:
+            HBNBCommand().onecmd("all State")
+        out_str = output.getvalue().strip()
+        self.assertIn(state_id, out_str)
+        self.assertNotIn(city_id, out_str)
 
 
 class TestHBNBCommand_update(unittest.TestCase):
@@ -307,6 +371,24 @@ class TestHBNBCommand_update(unittest.TestCase):
         obj = storage.all()[key]
         self.assertTrue(hasattr(obj, "name"))
         self.assertEqual(obj.name, "New Name")
+
+    def test_update_all_classes(self):
+        """Test updating an attribute for every supported class."""
+        for cls_name in CLASSES:
+            with self.subTest(cls_name=cls_name):
+                with patch('sys.stdout', new=StringIO()) as create_out:
+                    HBNBCommand().onecmd("create {}".format(cls_name))
+                obj_id = create_out.getvalue().strip()
+
+                with patch('sys.stdout', new=StringIO()):
+                    cmd = 'update {} {} name "Test Name"'.format(
+                        cls_name, obj_id
+                    )
+                    HBNBCommand().onecmd(cmd)
+
+                key = "{}.{}".format(cls_name, obj_id)
+                obj = storage.all()[key]
+                self.assertEqual(obj.name, "Test Name")
 
 
 if __name__ == "__main__":
