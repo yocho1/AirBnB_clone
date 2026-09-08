@@ -5,8 +5,8 @@
 This project is the first step of a larger AirBnB clone web application.
 It implements a command interpreter (a shell, similar to Bash) used to
 create, view, update, and delete the objects that make up the app —
-starting with `BaseModel`, the parent class every other object type will
-inherit from.
+starting with `BaseModel`, the parent class every other object type
+inherits from.
 
 Objects are stored in memory and persisted to a JSON file
 (`file.json`) through an abstracted storage engine (`FileStorage`), so
@@ -49,7 +49,8 @@ Once started, you'll see the `(hbnb)` prompt. Available commands:
 | `all`     | `all` or `all <class>`                        | Print all instances, or all instances of one class      |
 | `update`  | `update <class> <id> <attribute> "<value>"`   | Update an instance's attribute and save it              |
 
-Currently supported classes: `BaseModel`
+Currently supported classes: `BaseModel`, `User`, `State`, `City`,
+`Amenity`, `Place`, `Review`
 
 ### Examples
 
