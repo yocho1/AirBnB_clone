@@ -34,7 +34,6 @@ class FileStorage:
                 data = json.load(f)
                 for key, dict_obj in data.items():
                     class_name = dict_obj.get('__class__')
-                    # Import inside method to avoid circular import
                     from models.base_model import BaseModel
                     from models.user import User
                     from models.place import Place
