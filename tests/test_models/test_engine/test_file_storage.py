@@ -3,6 +3,7 @@
 
 import unittest
 import os
+import json
 from models.engine.file_storage import FileStorage
 from models.base_model import BaseModel
 from models import storage
@@ -41,6 +42,10 @@ class TestFileStorage(unittest.TestCase):
         self.storage.new(obj)
         self.storage.save()
         self.assertTrue(os.path.exists(self.test_file))
+        # Check file has content
+        with open(self.test_file, 'r') as f:
+            content = json.load(f)
+            self.assertIsInstance(content, dict)
 
     def test_reload(self):
         """Test reload() method loads objects"""
@@ -49,8 +54,18 @@ class TestFileStorage(unittest.TestCase):
         self.storage.new(obj)
         self.storage.save()
 
-        # Create new storage instance
+        # Create new storage instance and reload
         new_storage = FileStorage()
         new_storage.reload()
         key = f"{obj.__class__.__name__}.{obj.id}"
         self.assertIn(key, new_storage.all())
+        reloaded_obj = new_storage.all()[key]
+        self.assertEqual(reloaded_obj.name, "Test")
+
+    def test_reload_no_file(self):
+        """Test reload() with no file does nothing"""
+        # Ensure file doesn't exist
+        if os.path.exists(self.test_file):
+            os.remove(self.test_file)
+        self.storage.reload()  # Should not raise exception
+        self.assertEqual(len(self.storage.all()), 0)

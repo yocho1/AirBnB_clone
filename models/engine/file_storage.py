@@ -2,14 +2,6 @@
 """FileStorage class module"""
 
 import json
-import os
-from models.base_model import BaseModel
-from models.user import User
-from models.place import Place
-from models.state import State
-from models.city import City
-from models.amenity import Amenity
-from models.review import Review
 
 
 class FileStorage:
@@ -41,7 +33,16 @@ class FileStorage:
             with open(self.__file_path, 'r') as f:
                 data = json.load(f)
                 for key, dict_obj in data.items():
-                    class_name = dict_obj['__class__']
+                    class_name = dict_obj.get('__class__')
+                    # Import inside method to avoid circular import
+                    from models.base_model import BaseModel
+                    from models.user import User
+                    from models.place import Place
+                    from models.state import State
+                    from models.city import City
+                    from models.amenity import Amenity
+                    from models.review import Review
+
                     classes = {
                         'BaseModel': BaseModel,
                         'User': User,
@@ -55,5 +56,5 @@ class FileStorage:
                     if cls:
                         obj = cls(**dict_obj)
                         self.__objects[key] = obj
-        except (FileNotFoundError, json.decoder.JSONDecodeError):
+        except FileNotFoundError:
             pass

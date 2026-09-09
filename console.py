@@ -2,7 +2,6 @@
 """Command interpreter for AirBnB clone"""
 
 import cmd
-import sys
 from models import storage
 from models.base_model import BaseModel
 from models.user import User
@@ -140,21 +139,18 @@ class HBNBCommand(cmd.Cmd):
             print("** value missing **")
             return
         attr_name = args[2]
-        # Handle quoted strings (e.g., "New Name")
         attr_value = " ".join(args[3:])
-        # Remove quotes if present
         if attr_value.startswith('"') and attr_value.endswith('"'):
             attr_value = attr_value[1:-1]
         elif attr_value.startswith("'") and attr_value.endswith("'"):
             attr_value = attr_value[1:-1]
-        # Try to cast to appropriate type
         try:
             if '.' in attr_value:
                 attr_value = float(attr_value)
             else:
                 attr_value = int(attr_value)
         except ValueError:
-            pass  # Keep as string
+            pass
         obj = all_objs[key]
         setattr(obj, attr_name, attr_value)
         obj.save()
