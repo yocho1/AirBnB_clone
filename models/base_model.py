@@ -33,6 +33,7 @@ class BaseModel:
         self.updated_at = datetime.now()
         from models import storage
         storage.save()
+        return "OK"
 
     def to_dict(self):
         """Convert to dictionary for serialization"""
