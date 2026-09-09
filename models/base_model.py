@@ -9,12 +9,7 @@ class BaseModel:
     """Defines all common attributes/methods for other classes."""
 
     def __init__(self, *args, **kwargs):
-        """Initialize a new BaseModel instance.
-
-        Args:
-            *args: Unused.
-            *kwargs: Key/value pairs of attributes.
-        """
+        """Initialize a new BaseModel instance."""
         if kwargs:
             for key, value in kwargs.items():
                 if key == "__class__":
@@ -29,18 +24,18 @@ class BaseModel:
             models.storage.new(self)
 
     def __str__(self):
-        """Return the string representation of the BaseModel instance."""
+        """Return string representation."""
         return "[{}] ({}) {}".format(
             type(self).__name__, self.id, self.__dict__
         )
 
     def save(self):
-        """Update updated_at with the current datetime and save to storage."""
+        """Update updated_at with current datetime and save to storage."""
         self.updated_at = datetime.now()
         models.storage.save()
 
     def to_dict(self):
-        """Return a dictionary containing all keys/values of __dict__."""
+        """Return dictionary containing all keys/values of __dict__."""
         my_dict = self.__dict__.copy()
         my_dict["__class__"] = type(self).__name__
         my_dict["created_at"] = self.created_at.isoformat()
