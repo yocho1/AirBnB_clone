@@ -1,59 +1,39 @@
 #!/usr/bin/python3
-"""FileStorage class module"""
-
+"""Defines the FileStorage class."""
 import json
+from models.base_model import BaseModel
 
 
 class FileStorage:
-    """Serializes and deserializes objects to/from JSON"""
+    """Serializes instances to a JSON file and deserializes JSON file to instances."""
 
     __file_path = "file.json"
     __objects = {}
 
     def all(self):
-        """Return all objects"""
-        return self.__objects
+        """Returns the dictionary __objects."""
+        return FileStorage.__objects
 
     def new(self, obj):
-        """Add object to storage"""
-        key = f"{obj.__class__.__name__}.{obj.id}"
-        self.__objects[key] = obj
+        """Sets in __objects the obj with key <obj class name>.id."""
+        key = "{}.{}".format(obj.__class__.__name__, obj.id)
+        FileStorage.__objects[key] = obj
 
     def save(self):
-        """Save all objects to JSON file"""
-        serialized = {}
-        for key, obj in self.__objects.items():
-            serialized[key] = obj.to_dict()
-        with open(self.__file_path, 'w') as f:
-            json.dump(serialized, f)
+        """Serializes __objects to the JSON file (path: __file_path)."""
+        odict = FileStorage.__objects
+        objdict = {obj: odict[obj].to_dict() for obj in odict.keys()}
+        with open(FileStorage.__file_path, "w") as f:
+            json.dump(objdict, f)
 
     def reload(self):
-        """Load objects from JSON file"""
+        """Deserializes the JSON file to __objects if file exists."""
         try:
-            with open(self.__file_path, 'r') as f:
-                data = json.load(f)
-                for key, dict_obj in data.items():
-                    class_name = dict_obj.get('__class__')
-                    from models.base_model import BaseModel
-                    from models.user import User
-                    from models.place import Place
-                    from models.state import State
-                    from models.city import City
-                    from models.amenity import Amenity
-                    from models.review import Review
-
-                    classes = {
-                        'BaseModel': BaseModel,
-                        'User': User,
-                        'Place': Place,
-                        'State': State,
-                        'City': City,
-                        'Amenity': Amenity,
-                        'Review': Review
-                    }
-                    cls = classes.get(class_name)
-                    if cls:
-                        obj = cls(**dict_obj)
-                        self.__objects[key] = obj
+            with open(FileStorage.__file_path, "r") as f:
+                objdict = json.load(f)
+                for o in objdict.values():
+                    cls_name = o["__class__"]
+                    del o["__class__"]
+                    self.new(BaseModel(**o))
         except FileNotFoundError:
-            pass
+            return
